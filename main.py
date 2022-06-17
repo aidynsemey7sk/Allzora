@@ -8,11 +8,11 @@ from time import sleep
 start_time = time.time()
 
 '''Создание трех DataFrame и сортировка'''
-tr_df_1 = pd.DataFrame(get_data_from_xml_1('data_Soruce_1.xml'))  # 7062 str
+tr_df_1 = pd.DataFrame(get_data_from_xml_1('data_Soruce_1.xml'))
 tr_df_1 = tr_df_1.sort_values(by='ean_code')
-tr_df_2 = pd.DataFrame(get_data_from_xml_2('data_Source_2.xml'))  # 11534
+tr_df_2 = pd.DataFrame(get_data_from_xml_2('data_Source_2.xml'))
 tr_df_2 = tr_df_2.sort_values(by='ean_code')
-js_df = pd.DataFrame(get_data_from_json('data_Source_3.json'))  # 31368 str
+js_df = pd.DataFrame(get_data_from_json('data_Source_3.json'))
 js_df = js_df.sort_values(by='ean_code')
 
 '''Объединение Dataframe по EAN коду'''
@@ -25,9 +25,9 @@ merged_inner2 = pd.merge(left=merged_inner, right=js_df, left_on='ean_code', rig
 delete_list = merged_inner2['ean_code'].values.tolist()
 
 """Удаляем строки из начальных DF по списку для удаления"""
-tr_df_1 = tr_df_1.loc[~tr_df_1['ean_code'].isin(delete_list)]  # Осталось 6318 строк
-tr_df_2 = tr_df_2.loc[~tr_df_2['ean_code'].isin(delete_list)]  # Осталось 10790 строк
-js_df = js_df.loc[~js_df['ean_code'].isin(delete_list)]  # Осталось 30624 строк
+tr_df_1 = tr_df_1.loc[~tr_df_1['ean_code'].isin(delete_list)]
+tr_df_2 = tr_df_2.loc[~tr_df_2['ean_code'].isin(delete_list)]
+js_df = js_df.loc[~js_df['ean_code'].isin(delete_list)]
 
 """Функция объединения по производителю"""
 
@@ -41,7 +41,6 @@ def merge_manufacturer(name_manufacturer: str):
             ts = tr_df_1.loc[tr_df_1['MANUFACTURER'].str.contains("L'Or")]
         ts1 = tr_df_2.loc[tr_df_2['MANUFACTURER'] == name_manufacturer]
         ''''''
-        # print(name_manufacturer)
         js_name_manufacturer = name_manufacturer.upper()
         js_name_manufacturer = js_name_manufacturer.split()
         ts2 = js_df[js_df['MANUFACTURER'].str.contains(js_name_manufacturer[0])]
@@ -50,13 +49,10 @@ def merge_manufacturer(name_manufacturer: str):
         all_manufacturer_name = ts2.copy()
         '''Вырежем все дубликаты имён производителей'''
         unique_manufacturer_name = all_manufacturer_name.drop_duplicates(subset=['MANUFACTURER'])
-        # print(unique_manufacturer_name)
         '''Получим уникальное количество производителей'''
         count_unique_name = unique_manufacturer_name.shape[0]
-        manufacture_name = unique_manufacturer_name.iloc[0]['MANUFACTURER']
 
         '''Создадим и заполним его всеми вариантами имени производителся'''
-
         appended_data = []
         if count_unique_name > 1:
             for i in range(count_unique_name):
@@ -188,9 +184,9 @@ def merge_manufacturer(name_manufacturer: str):
                             not_duplicate_ean_list.append(sorted_salaries[-1][2]['ean_code'])
                             res.append(sorted_salaries[-1])
 
-                '''Выберем все вариации с рейтингом больше 68 и проверим на вхождение в список row_ean_list
+                '''Выберем все вариации с рейтингом больше 58 и проверим на вхождение в список row_ean_list
                 запишем в список fuzzi_list'''
-                if fuzz.token_sort_ratio(res[0]['fuzz_data'], fuzz_data_2) > 58:
+                if fuzz.token_sort_ratio(res[0]['fuzz_data'], fuzz_data_2) > 48:
                     if size in fuzz_data_2.split():
                         rating = fuzz.token_sort_ratio(res[0]['fuzz_data'], fuzz_data_2)
                         if 'tester' in res[0]['fuzz_data'].split():
@@ -219,7 +215,6 @@ def merge_manufacturer(name_manufacturer: str):
 
             if len(res) > 2:
                 result_list.append(res)
-                return res
 
 
 '''Запустим цикл для получения объединенных DF по имени производителя'''
@@ -232,17 +227,13 @@ for i, row4 in unique_manufacturer_name.iterrows():
     brand = row4['MANUFACTURER']
     try:
         if brand not in not_duplicate_list:
-            result = merge_manufacturer(brand)
-            result_list.append(result)
+            merge_manufacturer(brand)
             cnt += 1
             not_duplicate_list.append(brand)
     except Exception as ex:
         print(f'{ex} - Этот бренд мы уже обходили')
 
-# merge_manufacturer("L'Oreal")
-print(len(result_list))  # 77
 
-print(merged_inner2.shape)
 '''Распакуем объединенный список и прибавим к итоговому списку'''
 for i, row in merged_inner2.iterrows():
     res = [
@@ -267,9 +258,7 @@ for i, row in merged_inner2.iterrows():
     ]
     result_list.append(res)
 clear_data_list = []
-print(len(result_list))
 cont = 0
-# print(result_list)
 for i in result_list:
     cont += 1
     if i[0]:
@@ -294,7 +283,6 @@ for i in result_list:
             },
         ]
     clear_data_list.append(clear_result)
-print(len(clear_data_list))
 with open("db.json", "w") as file:
     json.dump({'compare_products': clear_data_list}, file)
 print("--- %s seconds -func-" % (time.time() - start_time))
