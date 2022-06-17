@@ -35,4 +35,23 @@ for i in a:
         x = i
 print(x)
 
-
+clear_result = [
+        {
+            'source_name': i[0]['source_name'],
+            'name': i[0]['fuzz_data'],
+            'ean_code': i[0]['ean_code'],
+            'id': i[0]['id'],
+        },
+        {
+            'source_name': i[1]['source_name'],
+            'name': i[1]['name'],
+            'ean_code': i[1]['ean_code'],
+            'id': i[1]['id'],
+        },
+        {
+            'source_name': i[2]['source_name'],
+            'name': i[2]['name'],
+            'ean_code': i[2]['ean_code'],
+            'id': i[2]['id'],
+        },
+    ]

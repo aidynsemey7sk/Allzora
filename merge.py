@@ -100,8 +100,6 @@ def get_data_from_xml_2(xml_doc):
 def get_data_from_json(json_doc):
     with open(json_doc) as f:
         all_products = json.load(f, strict=False)
-
-    # count = 0
     for product in all_products:
         ean_code = str(product['EANs'][0])
         id = str(product['Id'])
@@ -117,15 +115,11 @@ def get_data_from_json(json_doc):
                 size = size[0]
         if size == 'ml':
             size = 0
-
         manufacturer = product['BrandName']
         brand_line = product['LineaName']
-        linea_name = product['LineaName']
         brand_id = product['BrandId']
 
         dct = {'id': id, 'ean_code': ean_code, 'MANUFACTURER': manufacturer, 'brandline': brand_line,
-               'LineaName': linea_name, 'name': name, 'SIZE': size, 'brand_id': brand_id,
-               'measure': measure,
-               'source_name': 'data_Source_3',
+               'name': name, 'SIZE': size, 'brand_id': brand_id, 'measure': measure, 'source_name': 'data_Source_3',
                }
         yield dct

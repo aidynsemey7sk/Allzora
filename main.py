@@ -3,6 +3,7 @@ import json
 import time
 from merge import get_data_from_xml_1, get_data_from_xml_2, get_data_from_json
 from fuzzywuzzy import fuzz
+from time import sleep
 
 start_time = time.time()
 
@@ -36,20 +37,26 @@ result_list = []
 def merge_manufacturer(name_manufacturer: str):
     try:
         ts = tr_df_1.loc[tr_df_1['MANUFACTURER'] == name_manufacturer]
+        if name_manufacturer == "L'Oreal":
+            ts = tr_df_1.loc[tr_df_1['MANUFACTURER'].str.contains("L'Or")]
         ts1 = tr_df_2.loc[tr_df_2['MANUFACTURER'] == name_manufacturer]
         ''''''
+        # print(name_manufacturer)
         js_name_manufacturer = name_manufacturer.upper()
         js_name_manufacturer = js_name_manufacturer.split()
         ts2 = js_df[js_df['MANUFACTURER'].str.contains(js_name_manufacturer[0])]
+
         '''Создадим копию для поиска уникальных строк'''
         all_manufacturer_name = ts2.copy()
         '''Вырежем все дубликаты имён производителей'''
         unique_manufacturer_name = all_manufacturer_name.drop_duplicates(subset=['MANUFACTURER'])
-        '''Получим уникальное количество производителей производителей'''
+        # print(unique_manufacturer_name)
+        '''Получим уникальное количество производителей'''
         count_unique_name = unique_manufacturer_name.shape[0]
         manufacture_name = unique_manufacturer_name.iloc[0]['MANUFACTURER']
+
         '''Создадим и заполним его всеми вариантами имени производителся'''
-        ts2 = unique_manufacturer_name.iloc[0]['MANUFACTURER']
+
         appended_data = []
         if count_unique_name > 1:
             for i in range(count_unique_name):
@@ -59,9 +66,9 @@ def merge_manufacturer(name_manufacturer: str):
         if appended_data:
             appended_data = pd.concat(appended_data)
             ts2 = appended_data
-    except:
-        # print('Такого бренда нет в одном из датафреймов')
-        pass
+
+    except Exception as e:
+        print(f'[ERROR] {str(e)} Такого бренда нет в одном из датафреймов')
     row1_ean_list = []
     row_ean_list = []
     not_duplicate_ean_list = []
@@ -112,13 +119,13 @@ def merge_manufacturer(name_manufacturer: str):
                     rating = fuzz.token_sort_ratio(fuzz_data, fuzz_data_1)
                     fuzzi_list.append([
                         {
-                            'ean_code': ean_code, 'fuzz_data': fuzz_data,
+                            'ean_code': ean_code, 'fuzz_data': fuzz_data, 'name': row['name'],
                             'id': row['id'], 'source_name': row['source_name']
                         },
 
                         {
                             'ean_code': row1['ean_code'], 'fuzz_data_1': fuzz_data_1, 'id': row1['id'],
-                            'source_name': row1['source_name'], 'rating': rating
+                            'source_name': row1['source_name'], 'name': row1['name'], 'rating': rating
                         }
                     ])
 
@@ -137,8 +144,7 @@ def merge_manufacturer(name_manufacturer: str):
                 fuzz_data_2 = row2['MANUFACTURER'] + ' ' + row2['name']
 
                 '''Сначала обработаем данные из two_ean_code,
-                 так как они уже совпали'''
-
+                 так как они уже совпали у df1 и df2'''
                 two_ean_fuzzy_list = []
                 for z in two_ean_code:
                     new_fuzz_data = z[0]['name']
@@ -155,36 +161,32 @@ def merge_manufacturer(name_manufacturer: str):
                                     'ean_code': z[0]['ean_code'],
                                     'id': z[0]['id'],
                                 },
-                                {
-                                    'source_name': z[1]['source_name'],
-                                    'name': z[1]['name'],
-                                    'ean_code': z[1]['ean_code'],
-                                    'id': z[1]['id'],
-                                },
-                                {
-                                    'source_name': row2['source_name'],
-                                    'name': row2['name'],
-                                    'ean_code': row2['ean_code'],
-                                    'id': row2['id'],
-                                    'rating': new_rating
+                                    {
+                                        'source_name': z[1]['source_name'],
+                                        'name': z[1]['name'],
+                                        'ean_code': z[1]['ean_code'],
+                                        'id': z[1]['id'],
+                                    },
+                                    {
+                                        'source_name': row2['source_name'],
+                                        'name': row2['name'],
+                                        'ean_code': row2['ean_code'],
+                                        'id': row2['id'],
+                                        'rating': new_rating
 
-                                }
+                                    }
                                 ]
                             )
                 '''Проверим и отправим результат'''
                 if two_ean_fuzzy_list:
-
                     if len(two_ean_fuzzy_list) == 1:
-                        res.append(two_ean_fuzzy_list[0][:-1])
+                        not_duplicate_ean_list.append(two_ean_fuzzy_list['ean_code'])
                         break
                     if len(two_ean_fuzzy_list) > 1:
                         sorted_salaries = sorted(two_ean_fuzzy_list, key=lambda d: d[2]['rating'])
-                        res.append(sorted_salaries[-1])
                         if sorted_salaries[-1][2]['ean_code'] not in not_duplicate_ean_list:
                             not_duplicate_ean_list.append(sorted_salaries[-1][2]['ean_code'])
                             res.append(sorted_salaries[-1])
-                            break
-
 
                 '''Выберем все вариации с рейтингом больше 68 и проверим на вхождение в список row_ean_list
                 запишем в список fuzzi_list'''
@@ -194,23 +196,19 @@ def merge_manufacturer(name_manufacturer: str):
                         if 'tester' in res[0]['fuzz_data'].split():
                             rating = rating - 1
                         fuzzi_list_2.append([
-                            {'ean_code': ean_code, 'fuzz_data': fuzz_data, 'id': row1['id'],
+                            {'ean_code': ean_code, 'fuzz_data': fuzz_data, 'name': row2['name'], 'id': row1['id'],
                              'source_name': row1['source_name']},
-                            {'ean_code': row2['ean_code'], 'fuzz_data_1': fuzz_data_2, 'id': row2['id'],
-                             'name': row2['name'],
-                             "source_name": row2['source_name'], 'rating': rating}
-                        ])
-                        print([
-                            {'ean_code': ean_code, 'fuzz_data': fuzz_data, 'id': row1['id'],
-                             'source_name': row1['source_name']},
-                            {'ean_code': row2['ean_code'], 'fuzz_data_1': fuzz_data_2, 'id': row2['id'],
+                            {'ean_code': row2['ean_code'], 'fuzz_data_1': fuzz_data_2, 'name': row2['name'],
+                             'id': row2['id'],
                              'name': row2['name'],
                              "source_name": row2['source_name'], 'rating': rating}
                         ])
 
+            '''Проверим и отправим результат'''
             if fuzzi_list_2:
                 if len(fuzzi_list_2) > 1:
                     sorted_salaries = sorted(fuzzi_list_2, key=lambda d: d[1]['rating'])
+
                     res1 = sorted_salaries[-1]
                     if res1[0]['ean_code']:
                         res.append(res1[-1])
@@ -218,33 +216,10 @@ def merge_manufacturer(name_manufacturer: str):
                     if res1[0]['ean_code']:
                         res1 = fuzzi_list_2[0]
                         res.append(res1[-1])
-                # print(res)
 
             if len(res) > 2:
                 result_list.append(res)
-
-                result = [
-                    {
-                        'source_name': row['source_name'],
-                        'name': row['name'],
-                        'ean_code': row['ean_code'],
-                        'id': row['id'],
-                    },
-                    {
-                        'source_name': row1['source_name'],
-                        'name': row1['name'],
-                        'ean_code': row1['ean_code'],
-                        'id': row1['id'],
-                    },
-                    {
-                        'source_name': row2['source_name'],
-                        'name': row2['name'],
-                        'ean_code': row2['ean_code'],
-                        'id': row2['id'],
-                    },
-                ]
-                # print('res', res)
-                # print('RESULT', result)
+                return res
 
 
 '''Запустим цикл для получения объединенных DF по имени производителя'''
@@ -254,20 +229,17 @@ compare_products = []
 all_manufacturer_name = tr_df_1
 unique_manufacturer_name = all_manufacturer_name.drop_duplicates(subset=['MANUFACTURER'])
 for i, row4 in unique_manufacturer_name.iterrows():
-
     brand = row4['MANUFACTURER']
     try:
         if brand not in not_duplicate_list:
-            # merge_manufacturer('Hugo Boss')
-            merge_manufacturer(brand)
+            result = merge_manufacturer(brand)
+            result_list.append(result)
             cnt += 1
             not_duplicate_list.append(brand)
-
-            # if cnt == 2:
-            #     break
     except Exception as ex:
-        # print('Этот бренд мы уже обходили')
-        pass
+        print(f'{ex} - Этот бренд мы уже обходили')
+
+# merge_manufacturer("L'Oreal")
 print(len(result_list))  # 77
 
 print(merged_inner2.shape)
@@ -293,13 +265,36 @@ for i, row in merged_inner2.iterrows():
             'id': row['id'],
         },
     ]
-    # print(res)
     result_list.append(res)
-
-print(len(result_list))  # 77
-# for i in result_list:
-#     print(i)
+clear_data_list = []
 print(len(result_list))
+cont = 0
+# print(result_list)
+for i in result_list:
+    cont += 1
+    if i[0]:
+        clear_result = [
+            {
+                'source_name': i[0]['source_name'],
+                'name': i[0]['name'],
+                'ean_code': i[0]['ean_code'],
+                'id': i[0]['id'],
+            },
+            {
+                'source_name': i[1]['source_name'],
+                'name': i[1]['name'],
+                'ean_code': i[1]['ean_code'],
+                'id': i[1]['id'],
+            },
+            {
+                'source_name': i[2]['source_name'],
+                'name': i[2]['name'],
+                'ean_code': i[2]['ean_code'],
+                'id': i[2]['id'],
+            },
+        ]
+    clear_data_list.append(clear_result)
+print(len(clear_data_list))
 with open("db.json", "w") as file:
-    json.dump({'compare_products': result_list}, file)
+    json.dump({'compare_products': clear_data_list}, file)
 print("--- %s seconds -func-" % (time.time() - start_time))
