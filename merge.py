@@ -35,7 +35,6 @@ def get_data_from_xml_1(xml_doc):
             name = products.find('NAME').text
         else:
             name = ''
-
         if products.find('RANGE').text:
             brand_line = products.find('RANGE').text
         else:
