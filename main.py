@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 import time
-from merge import get_data_from_xml_1, get_data_from_xml_2, get_data_from_json
+from data import get_data_from_xml_1, get_data_from_xml_2, get_data_from_json
 from fuzzywuzzy import fuzz
 from time import sleep
 
@@ -107,7 +107,7 @@ def merge_manufacturer(name_manufacturer: str):
 
             '''Выберем все вариации с рейтингом больше 80 и проверим на вхождение в список row_ean_list
             запишем в список fuzzi_list'''
-            is_good_rating: bool = fuzz.token_sort_ratio(fuzz_data, fuzz_data_1) > 80
+            is_good_rating: bool = fuzz.token_sort_ratio(fuzz_data, fuzz_data_1) > 75
             is_ean_code_not_in_list: bool = row['ean_code'] not in row1_ean_list
 
             if is_good_rating:
@@ -218,7 +218,6 @@ def merge_manufacturer(name_manufacturer: str):
 
 
 '''Запустим цикл для получения объединенных DF по имени производителя'''
-cnt = 0
 not_duplicate_list = []
 compare_products = []
 all_manufacturer_name = tr_df_1
@@ -228,10 +227,9 @@ for i, row4 in unique_manufacturer_name.iterrows():
     try:
         if brand not in not_duplicate_list:
             merge_manufacturer(brand)
-            cnt += 1
             not_duplicate_list.append(brand)
     except Exception as ex:
-        print(f'{ex} - Этот бренд мы уже обходили')
+        print('Этот бренд мы уже обходили')
 
 
 '''Распакуем объединенный список и прибавим к итоговому списку'''
@@ -258,9 +256,8 @@ for i, row in merged_inner2.iterrows():
     ]
     result_list.append(res)
 clear_data_list = []
-cont = 0
+'''Приведем данные к единному формату'''
 for i in result_list:
-    cont += 1
     if i[0]:
         clear_result = [
             {
@@ -283,6 +280,8 @@ for i in result_list:
             },
         ]
     clear_data_list.append(clear_result)
+print(f'Итого потенциальные одинаковые продукты: {len(clear_data_list)}')
+
 with open("My_result1.json", "w") as file:
     json.dump({'compare_products': clear_data_list}, file)
 print("--- %s seconds -func-" % (time.time() - start_time))
