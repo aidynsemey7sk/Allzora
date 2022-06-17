@@ -283,6 +283,6 @@ for i in result_list:
             },
         ]
     clear_data_list.append(clear_result)
-with open("db.json", "w") as file:
+with open("My_result1.json", "w") as file:
     json.dump({'compare_products': clear_data_list}, file)
 print("--- %s seconds -func-" % (time.time() - start_time))
