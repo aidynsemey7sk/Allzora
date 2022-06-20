@@ -313,3 +313,6 @@ print(f'Итого потенциальные одинаковые продук�
 with open("My_result1.json", "w") as file:
     json.dump({'compare_products': clear_data_list}, file)
 print("--- %s seconds -func-" % (time.time() - start_time))
+
+
+
