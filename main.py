@@ -17,12 +17,16 @@ js_df = js_df.sort_values(by='ean_code')
 
 '''Объединение Dataframe по EAN коду'''
 merged_inner = pd.merge(left=tr_df_1, right=tr_df_2, left_on='ean_code', right_on='ean_code')
-merged_inner2 = pd.merge(left=merged_inner, right=js_df, left_on='ean_code', right_on='ean_code')
+merged_inner3 = pd.merge(left=tr_df_1, right=js_df, left_on='ean_code', right_on='ean_code')
+
+'''Готовые df'''
+result_df_2 = pd.merge(left=merged_inner, right=js_df, left_on='ean_code', right_on='new_ean_code')
+result_df_1 = pd.merge(left=merged_inner3, right=merged_inner, left_on='ean_code', right_on='ean_code')
 
 '''Получение списка ean_code которые мы уже выбрали
     для последующего удаления из начальных DF
 '''
-delete_list = merged_inner2['ean_code'].values.tolist()
+delete_list = result_df_1['ean_code'].values.tolist()
 
 """Удаляем строки из начальных DF по списку для удаления"""
 tr_df_1 = tr_df_1.loc[~tr_df_1['ean_code'].isin(delete_list)]
@@ -229,28 +233,52 @@ for i, row4 in unique_manufacturer_name.iterrows():
             merge_manufacturer(brand)
             not_duplicate_list.append(brand)
     except Exception as ex:
-        print('Этот бренд мы уже обходили')
+        # print('Этот бренд мы уже обходили')
+        pass
 
 
 '''Распакуем объединенный список и прибавим к итоговому списку'''
-for i, row in merged_inner2.iterrows():
+print(result_df_1)
+for i, row in result_df_1.iterrows():
+    res = [
+        {
+            'source_name': row['source_name_x_x'],
+            'name': row['name_x_x'],
+            'ean_code': row['ean_code'],
+            'id': row['id_x_x'],
+        },
+        {
+            'source_name': row['source_name_y_y'],
+            'name': row['name_y_y'],
+            'ean_code': row['ean_code'],
+            'id': row['id_y_y'],
+        },
+        {
+            'source_name': row['source_name_x_y'],
+            'name': row['name_x_y'],
+            'ean_code': row['ean_code'],
+            'id': row['id_x_y'],
+        },
+    ]
+    result_list.append(res)
+for i, row in result_df_2.iterrows():
     res = [
         {
             'source_name': row['source_name_x'],
             'name': row['name_x'],
-            'ean_code': row['ean_code'],
+            'ean_code': row['ean_code_x'],
             'id': row['id_x'],
         },
         {
             'source_name': row['source_name_y'],
             'name': row['name_y'],
-            'ean_code': row['ean_code'],
+            'ean_code': row['ean_code_x'],
             'id': row['id_y'],
         },
         {
             'source_name': row['source_name'],
             'name': row['name'],
-            'ean_code': row['ean_code'],
+            'ean_code': row['new_ean_code'],
             'id': row['id'],
         },
     ]

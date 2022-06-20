@@ -101,6 +101,7 @@ def get_data_from_json(json_doc):
         all_products = json.load(f, strict=False)
     for product in all_products:
         ean_code = str(product['EANs'][0])
+        new_ean_code = ean_code[1:]
         id = str(product['Id'])
         name = str(product['name'])
         size = product['Contenido']
@@ -119,6 +120,7 @@ def get_data_from_json(json_doc):
         brand_id = product['BrandId']
 
         dct = {'id': id, 'ean_code': ean_code, 'MANUFACTURER': manufacturer, 'brandline': brand_line,
-               'name': name, 'SIZE': size, 'brand_id': brand_id, 'measure': measure, 'source_name': 'data_Source_3',
+               'name': name, 'SIZE': size, 'brand_id': brand_id, 'measure': measure,
+               'new_ean_code': new_ean_code, 'source_name': 'data_Source_3',
                }
         yield dct
