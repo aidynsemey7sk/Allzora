@@ -233,7 +233,7 @@ for i, row4 in unique_manufacturer_name.iterrows():
             merge_manufacturer(brand)
             not_duplicate_list.append(brand)
     except Exception as ex:
-        # print('Этот бренд мы уже обходили')
+        print('Этот бренд мы уже обходили')
         pass
 
 
